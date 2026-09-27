@@ -188,7 +188,8 @@ function waitingSection() {
   return `<div class="card"><h2>Options</h2>
     <p class="muted">${left > 0
       ? `Options appear once all ${trip.expected_count} have sent their preferences. Waiting on ${left} more.`
-      : `Everyone's in. ${esc(trip.organizer)} can now generate the options.`}</p></div>`;
+      : `Everyone's in. ${esc(trip.organizer)} can now generate the options.`}</p>
+    ${trip.is_admin ? '' : `<p class="muted">Are you ${esc(trip.organizer)}? Open your <strong>organiser link</strong> (the one ending in <code>&amp;admin=…</code>) to see the Generate options button.</p>`}</div>`;
 }
 
 function optionsSection() {
