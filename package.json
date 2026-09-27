@@ -1,0 +1,10 @@
+{
+  "name": "group-trip-planner",
+  "version": "1.0.0",
+  "description": "One link: everyone submits trip preferences privately, the group gets 2-3 options with an overall fit",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  }
+}

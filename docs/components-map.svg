@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1040" viewBox="0 0 1600 1040" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#44403c"/>
+    </marker>
+    <style>
+      .t { font-size: 22px; font-weight: 700; fill: #1c1917; }
+      .k { font-size: 14px; font-weight: 700; letter-spacing: 1.5px; fill: #78716c; }
+      .b { font-size: 17px; fill: #292524; }
+      .s { font-size: 15px; fill: #57534e; }
+      .ln { stroke: #44403c; stroke-width: 2.5; fill: none; marker-end: url(#a); }
+    </style>
+  </defs>
+  <rect width="1600" height="1040" fill="#faf8f5"/>
+
+  <text x="60" y="66" font-size="34" font-weight="700" fill="#1c1917">Group Trip Planner · Components Map</text>
+  <text x="60" y="100" class="s" font-size="18">Riya's ask: one link, everyone's preferences, 2–3 best options, one decision. Cut: Check 07 (Judgment Protected).</text>
+
+  <!-- 1 INPUT -->
+  <rect x="60" y="150" width="300" height="250" rx="14" fill="#fff" stroke="#d6d3d1" stroke-width="2"/>
+  <text x="84" y="184" class="k">1 · INPUT</text>
+  <text x="84" y="216" class="t">One link, 5 friends</text>
+  <text x="84" y="252" class="b">Each person submits once:</text>
+  <text x="84" y="280" class="s">• max budget per person (₹)</text>
+  <text x="84" y="304" class="s">• free-from / free-until, nights</text>
+  <text x="84" y="328" class="s">• kind of trip (beach, hills…)</text>
+  <text x="84" y="352" class="s">• what they won't do</text>
+  <text x="84" y="382" class="s">Gets a private link to edit later</text>
+
+  <!-- 2 STORE -->
+  <rect x="440" y="150" width="300" height="250" rx="14" fill="#fff" stroke="#d6d3d1" stroke-width="2"/>
+  <text x="464" y="184" class="k">2 · STORE</text>
+  <text x="464" y="216" class="t">Supabase</text>
+  <text x="464" y="252" class="b">trips · trip_submissions</text>
+  <text x="464" y="284" class="s">Answers never leave the server</text>
+  <text x="464" y="308" class="s">Status shows who has submitted,</text>
+  <text x="464" y="332" class="s">never what they submitted</text>
+  <text x="464" y="366" class="s">Change of mind → options marked</text>
+  <text x="464" y="390" class="s">"out of date", nothing collapses</text>
+
+  <!-- 3 GATE -->
+  <rect x="820" y="150" width="300" height="250" rx="14" fill="#fff" stroke="#d6d3d1" stroke-width="2"/>
+  <text x="844" y="184" class="k">3 · GATE</text>
+  <text x="844" y="216" class="t">All 5 in? Riya runs it</text>
+  <text x="844" y="252" class="b">Generate unlocks only at 5 of 5</text>
+  <text x="844" y="284" class="s">(3 of 5 is how the Google</text>
+  <text x="844" y="308" class="s">Form failed)</text>
+  <text x="844" y="342" class="s">Organiser link = run + record.</text>
+  <text x="844" y="366" class="s">It does NOT show anyone's</text>
+  <text x="844" y="390" class="s">answers or fit.</text>
+
+  <!-- 4 AI -->
+  <rect x="1200" y="150" width="340" height="250" rx="14" fill="#e7f3f1" stroke="#0f766e" stroke-width="2"/>
+  <text x="1224" y="184" class="k" style="fill:#0f766e">4 · AI</text>
+  <text x="1224" y="216" class="t">Gemini 2.5 Flash</text>
+  <text x="1224" y="252" class="b">Sees P1–P5, never names</text>
+  <text x="1224" y="284" class="s">• proposes 3 distinct options:</text>
+  <text x="1224" y="308" class="s">  place, dates, ₹ range per person</text>
+  <text x="1224" y="332" class="s">• judges trip-type match and</text>
+  <text x="1224" y="356" class="s">  dealbreakers per person</text>
+  <text x="1224" y="386" class="s">Group text must not name anyone</text>
+
+  <path d="M360 275 H432" class="ln"/>
+  <path d="M740 275 H812" class="ln"/>
+  <path d="M1120 275 H1192" class="ln"/>
+
+  <!-- 5 SCORE -->
+  <rect x="820" y="470" width="720" height="150" rx="14" fill="#fff" stroke="#d6d3d1" stroke-width="2"/>
+  <text x="844" y="504" class="k">5 · SCORE (plain code, checkable)</text>
+  <text x="844" y="538" class="t">Fit per person per option, 0–100</text>
+  <text x="844" y="572" class="s">Budget 40 · Dates 30 · Trip type 20 · No dealbreaker 10 (a dealbreaker caps it at 25)</text>
+  <text x="844" y="598" class="s">Group fit = average of 5. Ranked by group fit; ties go to the option whose least-happy person is happiest.</text>
+  <path d="M1370 400 V462" class="ln"/>
+
+  <!-- 6a GROUP VIEW -->
+  <rect x="60" y="470" width="340" height="250" rx="14" fill="#fff" stroke="#0f766e" stroke-width="2"/>
+  <text x="84" y="504" class="k" style="fill:#0f766e">6a · WHAT THE GROUP SEES</text>
+  <text x="84" y="536" class="t">2–3 options</text>
+  <text x="84" y="570" class="s">• destination, dates, ₹ estimate</text>
+  <text x="84" y="594" class="s">• why it works for the group</text>
+  <text x="84" y="618" class="s">• watch-outs</text>
+  <text x="84" y="642" class="s">• ONE overall group-fit bar</text>
+  <text x="84" y="676" class="s" style="fill:#9a5b00">⚠ "AI estimates. Verify before</text>
+  <text x="84" y="700" class="s" style="fill:#9a5b00">booking." (Check 06 guard)</text>
+
+  <!-- 6b PRIVATE VIEW -->
+  <rect x="440" y="470" width="300" height="250" rx="14" fill="#f2eefb" stroke="#5b3fa8" stroke-width="2"/>
+  <text x="464" y="504" class="k" style="fill:#5b3fa8">6b · ONLY YOU SEE</text>
+  <text x="464" y="536" class="t">Your own fit</text>
+  <text x="464" y="570" class="s">Your % for each option, plus why:</text>
+  <text x="464" y="594" class="s">"₹15k could stretch your ₹14k"</text>
+  <text x="464" y="618" class="s">"Includes a trek you'd skip"</text>
+  <text x="464" y="652" class="s">Returned only with your own</text>
+  <text x="464" y="676" class="s">private link token</text>
+
+  <path d="M820 545 H748" class="ln"/>
+  <path d="M960 470 V438 H230 V462" class="ln"/>
+
+  <!-- 7 HUMAN -->
+  <rect x="60" y="790" width="680" height="170" rx="14" fill="#1c1917"/>
+  <text x="84" y="826" class="k" style="fill:#a8a29e">7 · HUMAN DECISION (the tool never picks)</text>
+  <text x="84" y="862" class="t" style="fill:#fafaf9">The five of them choose one option</text>
+  <text x="84" y="898" class="s" style="fill:#d6d3d1">Riya records it with the organiser link → preferences lock.</text>
+  <text x="84" y="924" class="s" style="fill:#d6d3d1">Nothing is booked automatically. Reopen is possible if the group changes its mind.</text>
+  <path d="M230 720 V782" class="ln"/>
+  <path d="M590 720 V782" class="ln"/>
+
+  <!-- THE CUT -->
+  <rect x="820" y="690" width="720" height="270" rx="14" fill="#fff4f2" stroke="#b42318" stroke-width="2.5" stroke-dasharray="10 6"/>
+  <text x="844" y="726" class="k" style="fill:#b42318">✂ THE CUT · CHECK 07 JUDGMENT PROTECTED = NO</text>
+  <text x="844" y="762" class="t">NOT BUILT: "where each person stands on each option"</text>
+  <text x="844" y="790" class="t">shown to the whole group</text>
+  <text x="844" y="826" class="s">It would publish private budgets and dealbreakers and name the blocker</text>
+  <text x="844" y="850" class="s">("Karan: 30%") with no one reviewing it first. That means more blame for Riya and</text>
+  <text x="844" y="874" class="s">less honest input. Enforced on the server (lib/view.js), not just hidden in the page.</text>
+  <text x="844" y="912" class="b" font-style="italic">To Riya: "The group sees where you all overlap, not who's blocking it,</text>
+  <text x="844" y="936" class="b" font-style="italic">and the five of you make the final call."</text>
+
+  <text x="60" y="1010" class="s">Stack: static HTML + Vercel serverless functions (Node) · Supabase (Postgres, RLS on) · Gemini 2.5 Flash · no npm dependencies</text>
+</svg>

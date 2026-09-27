@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Group Trip Planner</title>
+<style>
+  :root {
+    --bg: #faf8f5; --card: #ffffff; --ink: #1f1d1a; --muted: #6b665e; --line: #e6e1d8;
+    --accent: #0f766e; --accent-ink: #ffffff; --soft: #e7f3f1; --warn: #9a5b00; --warn-bg: #fff4e0;
+    --private: #5b3fa8; --private-bg: #f2eefb; --bar: #d9e9e6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #151413; --card: #1f1e1c; --ink: #eeeae4; --muted: #a39d93; --line: #34312d;
+      --accent: #2bb3a3; --accent-ink: #0c1413; --soft: #1b2e2b; --warn: #f0b35a; --warn-bg: #33291a;
+      --private: #b9a4f0; --private-bg: #27213a; --bar: #26403c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.7rem; margin: 0 0 4px; }
+  h2 { font-size: 1.15rem; margin: 0 0 12px; }
+  h3 { font-size: 1.05rem; margin: 0; }
+  p { margin: 0 0 10px; }
+  .muted { color: var(--muted); font-size: .92rem; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin: 16px 0; }
+  label { display: block; font-weight: 600; font-size: .92rem; margin: 12px 0 4px; }
+  input, textarea { width: 100%; font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; }
+  textarea { min-height: 70px; resize: vertical; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  @media (max-width: 520px) { .row, .row3 { grid-template-columns: 1fr; } }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chips label { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; margin: 0; padding: 6px 10px; border: 1px solid var(--line); border-radius: 999px; cursor: pointer; }
+  .chips input { width: auto; margin: 0; }
+  .chips label:has(input:checked) { background: var(--soft); border-color: var(--accent); }
+  button { font: inherit; font-weight: 600; border: 0; border-radius: 8px; padding: 10px 16px; background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+  button.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; align-items: center; }
+  .link { display: flex; gap: 8px; margin: 6px 0 12px; }
+  .link input { font-size: .85rem; }
+  .link button { padding: 8px 12px; white-space: nowrap; }
+  .pill { display: inline-block; font-size: .8rem; font-weight: 600; padding: 2px 9px; border-radius: 999px; background: var(--soft); color: var(--accent); }
+  .who { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .option { border-left: 4px solid var(--accent); }
+  .option.chosen { outline: 2px solid var(--accent); }
+  .opt-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+  .facts { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 8px 0 12px; font-size: .92rem; color: var(--muted); }
+  .fit { margin: 10px 0; }
+  .fit-label { display: flex; justify-content: space-between; font-size: .88rem; font-weight: 600; }
+  .bar { height: 10px; background: var(--bar); border-radius: 999px; overflow: hidden; margin-top: 4px; }
+  .bar > span { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+  .mine { background: var(--private-bg); border-radius: 10px; padding: 10px 12px; margin-top: 12px; }
+  .mine .fit-label { color: var(--private); }
+  .mine .bar > span { background: var(--private); }
+  .mine ul { margin: 6px 0 0; padding-left: 18px; font-size: .9rem; }
+  .verify { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 8px 12px; font-size: .88rem; margin-top: 12px; }
+  .notice { background: var(--private-bg); color: var(--private); border-radius: 8px; padding: 10px 12px; font-size: .9rem; }
+  .error { color: #c0392b; font-weight: 600; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<main id="app"><p class="muted">Loading…</p></main>
+
+<script>
+const $app = document.getElementById('app');
+const params = new URLSearchParams(location.search);
+const tripId = params.get('t');
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const inr = (n) => '₹' + Number(n).toLocaleString('en-IN');
+const fmtDate = (s) => new Date(s + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+
+// Private tokens live in the URL the person was given, and are remembered on this device.
+function keys() {
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem('trip:' + tripId) || '{}'); } catch {}
+  const k = { me: params.get('me') || saved.me || '', admin: params.get('admin') || saved.admin || '' };
+  remember(k);
+  return k;
+}
+function remember(k) {
+  try { localStorage.setItem('trip:' + tripId, JSON.stringify(k)); } catch {}
+}
+const base = () => location.origin + location.pathname;
+const shareLink = () => `${base()}?t=${tripId}`;
+const myLink = (me) => `${base()}?t=${tripId}&me=${me}`;
+const adminLink = (admin) => `${base()}?t=${tripId}&admin=${admin}`;
+
+async function api(path, body) {
+  const res = await fetch('/api/' + path, body
+    ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+    : undefined);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Something went wrong');
+  return data;
+}
+
+function linkBox(url) {
+  return `<div class="link"><input readonly value="${esc(url)}" onclick="this.select()"><button type="button" class="ghost" onclick="copy(this)">Copy</button></div>`;
+}
+window.copy = (btn) => {
+  const v = btn.previousElementSibling.value;
+  navigator.clipboard?.writeText(v).then(() => { btn.textContent = 'Copied'; setTimeout(() => (btn.textContent = 'Copy'), 1500); });
+};
+
+// ---------- Start a trip ----------
+function renderCreate() {
+  $app.innerHTML = `
+    <h1>Plan the trip. Once.</h1>
+    <p class="muted">Everyone fills in one short form through one link. The group gets 2–3 options with how well each fits the group overall, then makes one decision.</p>
+    <form class="card" id="create">
+      <h2>Start a trip</h2>
+      <label for="c-name">Trip name</label>
+      <input id="c-name" required maxlength="80" placeholder="College gang trip 2026">
+      <div class="row">
+        <div><label for="c-org">Your name</label><input id="c-org" required maxlength="40" placeholder="Riya"></div>
+        <div><label for="c-n">How many people are going?</label><input id="c-n" type="number" min="2" max="20" value="5" required></div>
+      </div>
+      <div class="actions"><button>Create the link</button><span class="error" id="c-err"></span></div>
+    </form>`;
+  document.getElementById('create').onsubmit = async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button');
+    btn.disabled = true;
+    try {
+      const { id, admin_token } = await api('create', {
+        name: document.getElementById('c-name').value,
+        organizer: document.getElementById('c-org').value,
+        expected_count: document.getElementById('c-n').value,
+      });
+      try { localStorage.setItem('trip:' + id, JSON.stringify({ me: '', admin: admin_token })); } catch {}
+      location.href = `${base()}?t=${id}&admin=${admin_token}`;
+    } catch (err) {
+      document.getElementById('c-err').textContent = err.message;
+      btn.disabled = false;
+    }
+  };
+}
+
+// ---------- A trip ----------
+let trip, k;
+
+async function load() {
+  k = keys();
+  try {
+    trip = await api(`trip?id=${encodeURIComponent(tripId)}&me=${encodeURIComponent(k.me)}&admin=${encodeURIComponent(k.admin)}`);
+  } catch (err) {
+    $app.innerHTML = `<h1>Trip not found</h1><p class="muted">${esc(err.message)}</p><p><a href="${base()}">Start a new trip</a></p>`;
+    return;
+  }
+  document.title = trip.name + ' · Group Trip Planner';
+  render();
+}
+
+function render() {
+  const done = trip.submitted.length;
+  const decided = trip.status === 'decided';
+  $app.innerHTML = `
+    <h1>${esc(trip.name)}</h1>
+    <p class="muted">Organised by ${esc(trip.organizer)} · ${done} of ${trip.expected_count} have sent their preferences</p>
+    <div class="who">${trip.submitted.map((n) => `<span class="pill">✓ ${esc(n)}</span>`).join('')}</div>
+    ${decided ? decidedBanner() : ''}
+    ${trip.is_admin ? adminPanel() : ''}
+    ${trip.options ? optionsSection() : waitingSection()}
+    ${decided ? '' : formSection()}
+  `;
+  bindForm();
+  bindAdmin();
+}
+
+function decidedBanner() {
+  const o = trip.options[trip.decided_index];
+  return `<div class="card option chosen"><span class="pill">Decided</span>
+    <h2 style="margin-top:8px">${esc(o.destination)}, ${fmtDate(o.start_date)} – ${fmtDate(o.end_date)}</h2>
+    <p class="muted">The group has made its call. Preferences are now locked.</p>
+    <div class="verify">Prices and availability are AI estimates. Verify before booking.</div></div>`;
+}
+
+function waitingSection() {
+  const left = trip.expected_count - trip.submitted.length;
+  return `<div class="card"><h2>Options</h2>
+    <p class="muted">${left > 0
+      ? `Options appear once all ${trip.expected_count} have sent their preferences. Waiting on ${left} more.`
+      : `Everyone's in. ${esc(trip.organizer)} can now generate the options.`}</p></div>`;
+}
+
+function optionsSection() {
+  const fits = trip.me?.fits;
+  return `
+    <h2 style="margin-top:28px">Your options</h2>
+    ${trip.options_stale ? `<p class="notice">Someone updated their preferences after these options were made. ${esc(trip.organizer)} can refresh them.</p>` : ''}
+    <p class="muted">The group fit is the average across all ${trip.expected_count} people. Nobody, including the organiser, can see anyone else's fit or preferences.</p>
+    ${trip.options.map((o, i) => `
+      <div class="card option ${trip.decided_index === i ? 'chosen' : ''}">
+        <div class="opt-head"><h3>${i + 1}. ${esc(o.destination)}</h3><span class="pill">${esc(o.trip_type)}</span></div>
+        <div class="facts">
+          <span>📅 ${fmtDate(o.start_date)} – ${fmtDate(o.end_date)}</span>
+          <span>💰 ${inr(o.cost_min)}–${inr(o.cost_max)} per person (est.)</span>
+        </div>
+        <p>${esc(o.summary)}</p>
+        <p><strong>Why it works for the group:</strong> ${esc(o.why_it_works)}</p>
+        <p><strong>Watch out for:</strong> ${esc(o.watch_outs)}</p>
+        <div class="fit">
+          <div class="fit-label"><span>Group fit</span><span>${o.group_fit}%</span></div>
+          <div class="bar"><span style="width:${o.group_fit}%"></span></div>
+        </div>
+        ${fits?.[i] ? `
+          <div class="mine">
+            <div class="fit-label"><span>🔒 Your fit (only you see this)</span><span>${fits[i].score}%</span></div>
+            <div class="bar"><span style="width:${fits[i].score}%"></span></div>
+            <ul>${fits[i].notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>
+          </div>` : ''}
+        <div class="verify">Prices and availability are AI estimates. Verify before booking.</div>
+        ${trip.is_admin && trip.status !== 'decided'
+          ? `<div class="actions"><button class="ghost" data-decide="${i}">Record: the group chose this</button></div>` : ''}
+      </div>`).join('')}`;
+}
+
+function adminPanel() {
+  const ready = trip.submitted.length >= trip.expected_count;
+  const decided = trip.status === 'decided';
+  return `<div class="card">
+    <h2>Organiser</h2>
+    <label>Share this link in the group</label>
+    ${linkBox(shareLink())}
+    <label>Your organiser link (keep this one to yourself)</label>
+    ${linkBox(adminLink(k.admin))}
+    <div class="actions">
+      ${decided
+        ? `<button class="ghost" id="a-reopen">Reopen the decision</button>`
+        : `<button id="a-gen" ${ready ? '' : 'disabled'}>${trip.options ? 'Refresh options' : 'Generate options'}</button>
+           <span class="muted">${ready ? '' : `Needs all ${trip.expected_count}.`}</span>
+           <span class="muted">Group size <input id="a-n" type="number" min="2" max="20" value="${trip.expected_count}" style="width:70px"></span>`}
+      <span class="error" id="a-err"></span>
+    </div>
+    <p class="muted" style="margin-top:12px">You pick nothing for the group. Share the options, the group decides, and you record the decision here.</p>
+  </div>`;
+}
+
+function formSection() {
+  const m = trip.me || {};
+  const types = m.types || [];
+  return `<form class="card" id="prefs">
+    <h2>${trip.me ? 'Your preferences' : 'Add your preferences'}</h2>
+    <p class="notice">🔒 Your budget, dates and dealbreakers are private. The group, including ${esc(trip.organizer)}, only sees options and an overall fit, never your answers.</p>
+    <div class="row">
+      <div><label for="p-name">Your name</label><input id="p-name" required maxlength="40" value="${esc(m.name)}"></div>
+      <div><label for="p-city">Travelling from</label><input id="p-city" maxlength="60" placeholder="Bengaluru" value="${esc(m.home_city)}"></div>
+    </div>
+    <label for="p-budget">Max budget per person, all-in (₹)</label>
+    <input id="p-budget" type="number" min="1000" step="500" required placeholder="20000" value="${esc(m.budget_max)}">
+    <div class="row3">
+      <div><label for="p-from">Free from</label><input id="p-from" type="date" required value="${esc(m.date_from)}"></div>
+      <div><label for="p-to">Free until</label><input id="p-to" type="date" required value="${esc(m.date_to)}"></div>
+      <div><label for="p-nights">Nights you'd like</label><input id="p-nights" type="number" min="1" max="14" required value="${esc(m.nights || 3)}"></div>
+    </div>
+    <label>What kind of trip? (pick any)</label>
+    <div class="chips">${trip.trip_types.map((t) => `<label><input type="checkbox" value="${esc(t)}" ${types.includes(t) ? 'checked' : ''}>${esc(t)}</label>`).join('')}</div>
+    <label for="p-no">What you won't do</label>
+    <textarea id="p-no" maxlength="400" placeholder="No treks, no overnight buses, no hostels…">${esc(m.dealbreakers)}</textarea>
+    <div class="actions">
+      <button>${trip.me ? 'Update my preferences' : 'Send my preferences'}</button>
+      <span class="error" id="p-err"></span>
+    </div>
+    ${trip.me ? `<label>Your private link (use it to come back and edit)</label>${linkBox(myLink(k.me))}` : ''}
+  </form>`;
+}
+
+function bindForm() {
+  const form = document.getElementById('prefs');
+  if (!form) return;
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector('button');
+    const err = document.getElementById('p-err');
+    btn.disabled = true; err.textContent = '';
+    try {
+      const { me } = await api('submit', {
+        id: tripId, me: k.me,
+        name: document.getElementById('p-name').value,
+        home_city: document.getElementById('p-city').value,
+        budget_max: document.getElementById('p-budget').value,
+        date_from: document.getElementById('p-from').value,
+        date_to: document.getElementById('p-to').value,
+        nights: document.getElementById('p-nights').value,
+        types: [...form.querySelectorAll('.chips input:checked')].map((c) => c.value),
+        dealbreakers: document.getElementById('p-no').value,
+      });
+      k.me = me; remember(k);
+      await load();
+    } catch (ex) {
+      err.textContent = ex.message; btn.disabled = false;
+    }
+  };
+}
+
+function bindAdmin() {
+  if (!trip.is_admin) return;
+  const err = document.getElementById('a-err');
+  const run = async (btn, body, label) => {
+    btn.disabled = true; err.textContent = '';
+    if (label) btn.textContent = label;
+    try { await api(body.path, { id: tripId, admin: k.admin, ...body.data }); await load(); }
+    catch (ex) { err.textContent = ex.message; btn.disabled = false; }
+  };
+  const gen = document.getElementById('a-gen');
+  if (gen) gen.onclick = () => run(gen, { path: 'generate', data: {} }, 'Finding options… (up to a minute)');
+  const n = document.getElementById('a-n');
+  if (n) n.onchange = () => run(n, { path: 'admin', data: { action: 'expected', expected_count: n.value } });
+  const reopen = document.getElementById('a-reopen');
+  if (reopen) reopen.onclick = () => run(reopen, { path: 'admin', data: { action: 'reopen' } });
+  document.querySelectorAll('[data-decide]').forEach((b) => {
+    b.onclick = () => confirm('Record this as the group\'s decision? Preferences will lock.')
+      && run(b, { path: 'admin', data: { action: 'decide', index: Number(b.dataset.decide) } });
+  });
+}
+
+tripId ? load() : renderCreate();
+</script>
+</body>
+</html>
