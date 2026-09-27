@@ -74,12 +74,15 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const inr = (n) => '₹' + Number(n).toLocaleString('en-IN');
 const fmtDate = (s) => new Date(s + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
-// Private tokens live in the URL the person was given, and are remembered on this device.
+// Private tokens arrive in the link the person was given and are remembered on this
+// device. They're then stripped from the address bar, so copying it only ever
+// shares the plain group link.
 function keys() {
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem('trip:' + tripId) || '{}'); } catch {}
   const k = { me: params.get('me') || saved.me || '', admin: params.get('admin') || saved.admin || '' };
   remember(k);
+  if (params.has('me') || params.has('admin')) history.replaceState(null, '', `?t=${tripId}`);
   return k;
 }
 function remember(k) {
@@ -233,10 +236,10 @@ function adminPanel() {
       ${decided
         ? `<button class="ghost" id="a-reopen">Reopen the decision</button>`
         : `<button id="a-gen" ${ready ? '' : 'disabled'}>${trip.options ? 'Refresh options' : 'Generate options'}</button>
-           <span class="muted">${ready ? '' : `Needs all ${trip.expected_count}.`}</span>
            <span class="muted">Group size <input id="a-n" type="number" min="2" max="20" value="${trip.expected_count}" style="width:70px"></span>`}
       <span class="error" id="a-err"></span>
     </div>
+    ${decided || ready ? '' : `<p class="notice" style="margin-top:12px">${trip.submitted.length} of ${trip.expected_count} in. <strong>Generate options</strong> unlocks when everyone has sent their preferences: waiting on ${trip.expected_count - trip.submitted.length} more.</p>`}
     <p class="muted" style="margin-top:12px">You pick nothing for the group. Share the options, the group decides, and you record the decision here.</p>
   </div>`;
 }
@@ -246,6 +249,8 @@ function formSection() {
   const types = m.types || [];
   return `<form class="card" id="prefs">
     <h2>${trip.me ? 'Your preferences' : 'Add your preferences'}</h2>
+    ${trip.me ? `<div class="actions" style="margin:0 0 12px"><span class="muted">Filling in as <strong>${esc(trip.me.name)}</strong>. Not ${esc(trip.me.name)}?</span>
+      <button type="button" class="ghost" id="p-switch">I'm someone else</button></div>` : ''}
     <p class="notice">🔒 Your budget, dates and dealbreakers are private. The group, including ${esc(trip.organizer)}, only sees options and an overall fit, never your answers.</p>
     <div class="row">
       <div><label for="p-name">Your name</label><input id="p-name" required maxlength="40" value="${esc(m.name)}"></div>
@@ -273,6 +278,10 @@ function formSection() {
 function bindForm() {
   const form = document.getElementById('prefs');
   if (!form) return;
+  // Lets several people fill in on one device: forgets who's filling in here
+  // (the organiser link stays remembered). Their answers stay saved.
+  const sw = document.getElementById('p-switch');
+  if (sw) sw.onclick = () => { k.me = ''; remember(k); load(); };
   form.onsubmit = async (e) => {
     e.preventDefault();
     const btn = form.querySelector('button');
